@@ -196,6 +196,43 @@ const sendDepositEmail = async ({  from, amount, method,timestamp }) => {
   // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
 };
 
+const sendBankDepositRequestEmail = async ({  from, amount, method,timestamp }) => {
+  
+  let transporter = nodemailer.createTransport({
+    host: "mail.privateemail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER, // generated ethereal user
+      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
+    },
+  });
+
+  let info = await transporter.sendMail({
+    from: `${process.env.EMAIL_USER}`, // sender address
+    to: "support@Stoxphere.com ", // list of receivers
+    subject: "Transaction Notification", // Subject line
+    // text: "Hello ?", // plain text body
+    html: `
+
+    <html>
+    <p>Hello Chief</p>
+
+    <p>${from}  just sent bank transfer request for $${amount}. Please provide account details.
+    </p>
+ <p>${timestamp}</p>
+    <p>Best wishes,</p>
+    <p>Stoxphere Team</p>
+
+    </html>
+    
+    `, // html body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+};
+
 const sendDepositApproval = async ({  from, amount, method,timestamp,to}) => {
   
   let transporter = nodemailer.createTransport({
@@ -806,6 +843,7 @@ module.exports = {
   sendPasswordOtp,
   sendForgotPasswordEmail,
   sendVerificationEmail,
+  sendBankDepositRequestEmail,
   sendWithdrawalEmail,
   sendWithdrawalRequestEmail,
   sendWelcomeEmail,
