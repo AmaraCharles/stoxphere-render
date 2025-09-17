@@ -98,6 +98,91 @@ router.post("/:_id/deposit", async (req, res) => {
   }
 });
 
+
+router.post("/users/:userId/challenges/join", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let { challenge } = req.body;
+
+    if (!challenge || typeof challenge !== "object") {
+      return res.status(400).json({ error: "Invalid challenge data" });
+    }
+
+    const user = await UsersDatabase.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.challengeBalance < challenge.entryFee) {
+      return res.status(400).json({ error: "Not enough challenge balance" });
+    }
+
+    // Deduct balance
+    user.challengeBalance -= challenge.entryFee;
+
+    // 🚨 Explicitly build object that matches ChallengeSubSchema
+    const challengeToAdd = {
+      challengeId: String(challenge.challengeId || challenge.id), // support both
+      title: String(challenge.title),
+      entryFee: Number(challenge.entryFee),
+      duration: Number(challenge.duration || challenge.durationDays),
+      expectedProfitRate: String(challenge.expectedProfitRate),
+      minProfit: Number(challenge.minProfit),
+      reward: String(challenge.reward),
+      profit: 0,
+      daysLeft: Number(challenge.duration || challenge.durationDays),
+      joinedAt: new Date(),
+      isCompleted: false,
+      rewardClaimed: false
+    };
+
+    console.log("ChallengeToAdd:", challengeToAdd);
+
+    user.challenges.push(challengeToAdd);
+
+    await user.save();
+    res.json({ message: "Challenge joined successfully", user });
+  } catch (err) {
+    console.error("Join challenge error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+router.post("/users/:userId/challenges/:challengeId/claim", async (req, res) => {
+  try {
+    const { userId, challengeId } = req.params;
+
+    const user = await UsersDatabase.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const challenge = user.challenges.find(c => c._id.toString() === challengeId);
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    if (challenge.profit < challenge.minProfit) {
+      return res.status(400).json({ error: "Profit target not reached" });
+    }
+
+    if (challenge.rewardClaimed) {
+      return res.status(400).json({ error: "Reward already claimed" });
+    }
+
+    // Apply reward
+    if (challenge.reward.includes("x2")) {
+      user.balance += challenge.profit * 2;
+    } else if (challenge.reward.includes("$")) {
+      const amount = parseInt(challenge.reward.replace(/\D/g, ""));
+      user.balance += amount;
+    }
+
+    challenge.rewardClaimed = true;
+    await user.save();
+
+    res.json({ message: "Reward claimed successfully", balance: user.balance });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post("/:_id/deposit/bank", async (req, res) => {
   const { _id } = req.params;
   const { method, amount, from ,timestamp,to} = req.body;
@@ -832,6 +917,7 @@ router.put("/trades/:tradeId/command", async (req, res) => {
             finalProfit = 0;
           }
 
+          // ✅ Update trade completion
           await UsersDatabase.updateOne(
             { "planHistory._id": tradeId },
             {
@@ -844,12 +930,24 @@ router.put("/trades/:tradeId/command", async (req, res) => {
             }
           );
 
+          // ✅ Add profit to user and challenge
           if (isWin && finalProfit > 0) {
+            const updateFields = { $inc: { profit: finalProfit } };
+
+            if (updatedUser.challengeStatus === true) {
+              // also add profit to challenge.profit
+              updateFields.$inc["challenge.profit"] = finalProfit;
+            }
+
             await UsersDatabase.updateOne(
               { _id: updatedUser._id },
-              { $inc: { profit: finalProfit } }
+              updateFields
             );
+
             console.log(`✅ Profit ${finalProfit} added to user ${updatedUser._id}`);
+            if (updatedUser.challengeStatus === true) {
+              console.log(`✅ Profit ${finalProfit} also added to challenge for user ${updatedUser._id}`);
+            }
           }
         } catch (err) {
           console.error("Trade timer error:", err);
@@ -863,6 +961,7 @@ router.put("/trades/:tradeId/command", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 // =====================

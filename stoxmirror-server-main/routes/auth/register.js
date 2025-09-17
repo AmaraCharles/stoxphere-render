@@ -20,32 +20,30 @@ function generateReferralCode(length) {
 
 
 router.post("/register", async (req, res) => {
-  const { firstName, lastName, email, password, country, referralCode,phone} = req.body;
- // Generate OTP
- const otp = speakeasy.totp({
-  secret: process.env.SECRET_KEY, // Secure OTP generation
-  encoding: "base32",
-});
+  const { firstName, lastName, email, password, country, referralCode, phone } = req.body;
 
-// Set OTP expiration time (5 minutes from now)
-const otpExpiration = Date.now() + (5 * 60 * 1000); // 5 minutes in milliseconds
+  // Generate OTP
+  const otp = speakeasy.totp({
+    secret: process.env.SECRET_KEY,
+    encoding: "base32",
+  });
+
+  const otpExpiration = Date.now() + (5 * 60 * 1000); // 5 minutes
+
   try {
-    // Check if any user has that email
-    const user = await UsersDatabase.findOne({ email });
-
-    if (user) {
+    // ✅ Check if email already exists
+    const existingUser = await UsersDatabase.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: "Email address is already taken",
       });
     }
 
-
-    // Find the referrer based on the provided referral code
+    // ✅ Validate referral code (if provided)
     let referrer = null;
-    
     if (referralCode) {
-      referrer = await UsersDatabase.findOne({ referralCode });
+      referrer = await UsersDatabase.findOne({ "referrals.referralCode": referralCode });
       if (!referrer) {
         return res.status(400).json({
           success: false,
@@ -54,83 +52,79 @@ const otpExpiration = Date.now() + (5 * 60 * 1000); // 5 minutes in milliseconds
       }
     }
 
-    // Create a new user with referral information
-    const newUser = {
+    // ✅ Build new user object
+    const newUser = new UsersDatabase({
       firstName,
       lastName,
+      phone,
       email,
-      password: hashPassword(password),
       country,
-      trader:"",
-      phone:phone,
-      amountDeposited: " You are not eligible to view livestream of ongoing trade.Kindly contact your trader or support.",
-      profit: 0,
-      balance: 0,
-      copytrading:0,
-      plan:[],
-      kyc:"unverified",
-      condition:" ",
-      referalBonus: 0,
-      transactions: [],
-      withdrawals: [],
-      planHistory: [],
-     
-      accounts: {
-        eth: {
-          address: "",
-        },
-        ltc: {
-          address: "",
-        },
-        btc: {
-          address: "",
-        },
-        usdt: {
-          address: "",
-        },
-      },
+      password: hashPassword(password),
+
+      kyc: "unverified",
       verified: false,
       isDisabled: false,
-      referredUsers:[],
-      referralCode: generateReferralCode(6), // Generate a referral code for the new user
-      referredBy:null, // Store the ID of the referrer if applicable
-    };
 
+      referrals: {
+        referralCode: generateReferralCode(6),
+        referredBy: referrer ? referrer._id : null,
+        referredUsers: [],
+        referralBonus: 0,
+      },
+
+      
+        copytrading: false,
+        subscribedTrader: null,
+        balance: 0,
+        profit: 0,
+         challengeBalance:0,
+         challengeProfit:0,
+        amountDeposited: 0,
+        accounts: {
+          eth: { address: "" },
+          ltc: { address: "" },
+          btc: { address: "" },
+          usdt: { address: "" },
+        },
+        transactions: [],
+        withdrawals: [],
+      
+
+      plans: [],
+      challenges: [],
+    });
+
+    // ✅ Save new user
+    const createdUser = await newUser.save();
+
+    // ✅ Update referrer if applicable
     if (referrer) {
-      newUser.referredBy=referrer.firstName;
-      referrer.referredUsers.push(newUser.firstName);
+      referrer.referrals.referredUsers.push(createdUser._id);
       await referrer.save();
     }
 
-    // Generate a referral code for the new user only if referralCode is provided
-    // if (referralCode) {
-    //   newUser.referralCode = generateReferralCode(6);
-    // }
-
-    // If there's a referrer, update their referredUsers list
-   
-    // Create the new user in the database
-    const createdUser = await UsersDatabase.create(newUser);
+    // ✅ Send emails
     const token = uuidv4();
     sendWelcomeEmail({ to: email, token });
-userRegisteration({firstName,email});
-return res.status(200).json({
-  code: "Ok",
-  data: createdUser,
-  otp: otp, // OTP in the response
-  otpExpiration: otpExpiration, // Include expiration time
-});
-    
+    userRegisteration({ firstName, email });
+
+    // ✅ Respond with OTP + user
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      data: createdUser,
+      otp,
+      otpExpiration,
+    });
+
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Registration error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
     });
   }
 });
-
-
 
 // router.post("/register", async (req, res) => {
 //   const { firstName, lastName, email, password, country, referralCode } = req.body;
