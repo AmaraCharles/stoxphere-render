@@ -5,7 +5,7 @@ var express = require("express");
 
 var router = express.Router();
 const { sendDepositEmail,sendPlanEmail} = require("../../utils");
-const { sendUserDepositEmail,sendUserPlanEmail,sendBankDepositRequestEmail,sendWithdrawalEmail,sendWithdrawalRequestEmail,sendKycAlert} = require("../../utils");
+const { sendUserPlanEmail,sendUserDepositEmail,sendBankDepositRequestEmail,sendWithdrawalEmail,sendWithdrawalRequestEmail,sendKycAlert,sendDepositApproval} = require("../../utils");
 const nodeCrypto = require("crypto");
 
 // If global.crypto is missing or incomplete, polyfill it
@@ -99,6 +99,65 @@ router.post("/:_id/deposit", async (req, res) => {
 });
 
 
+router.post("/:_id/deposit/challenge", async (req, res) => {
+  const { _id } = req.params;
+  const { method, amount, from ,timestamp,to} = req.body;
+
+  const user = await UsersDatabase.findOne({ _id });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      status: 404,
+      message: "User not found",
+    });
+
+    return;
+  }
+
+  try {
+    await user.updateOne({
+      challengeTransactions: [
+        ...user.challengeTransactions,
+        {
+          _id: uuidv4(),
+          method,
+          type: "Deposit",
+          amount,
+          from,
+          status:"pending",
+          timestamp,
+        },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Deposit was successful",
+    });
+
+    sendDepositEmail({
+      amount: amount,
+      method: method,
+      from: from,
+      timestamp:timestamp
+    });
+
+
+    sendUserDepositEmail({
+      amount: amount,
+      method: method,
+      from: from,
+      to:to,
+      timestamp:timestamp
+    });
+
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 router.post("/users/:userId/challenges/join", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -158,7 +217,7 @@ router.post("/users/:userId/challenges/:challengeId/claim", async (req, res) => 
     const challenge = user.challenges.find(c => c._id.toString() === challengeId);
     if (!challenge) return res.status(404).json({ error: "Challenge not found" });
 
-    if (challenge.profit < challenge.minProfit) {
+    if (user.challengeProfit < challenge.minProfit) {
       return res.status(400).json({ error: "Profit target not reached" });
     }
 
@@ -168,16 +227,16 @@ router.post("/users/:userId/challenges/:challengeId/claim", async (req, res) => 
 
     // Apply reward
     if (challenge.reward.includes("x2")) {
-      user.balance += challenge.profit * 2;
+      user.challengeBalance += challenge.profit * 2;
     } else if (challenge.reward.includes("$")) {
       const amount = parseInt(challenge.reward.replace(/\D/g, ""));
-      user.balance += amount;
+      user.challengeBalance += amount;
     }
 
     challenge.rewardClaimed = true;
     await user.save();
 
-    res.json({ message: "Reward claimed successfully", balance: user.balance });
+    res.json({ message: "Reward claimed successfully", balance:  user.challengeBalance });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1096,49 +1155,137 @@ router.put("/trades/:tradeId/command", async (req, res) => {
 //   }
 // });
 router.put("/:_id/transactions/:transactionId/confirm", async (req, res) => {
-  
-  const { _id } = req.params;
-  const { transactionId } = req.params;
-
-  const user = await UsersDatabase.findOne({ _id });
-
-  if (!user) {
-    res.status(404).json({
-      success: false,
-      status: 404,
-      message: "User not found",
-    });
-
-    return;
-  }
+  const { _id, transactionId } = req.params;
+  const { amount } = req.body;
 
   try {
+    // Find the user by _id
+    const user = await UsersDatabase.findOne({ _id });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "User not found",
+      });
+    }
+
+    // Find the deposit transaction by transactionId
     const depositsArray = user.transactions;
-    const depositsTx = depositsArray.filter(
-      (tx) => tx._id === transactionId
-    );
+    const depositsTx = depositsArray.filter((tx) => tx._id === transactionId);
 
+    if (depositsTx.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    // Update transaction and user balance
     depositsTx[0].status = "Approved";
-    // console.log(withdrawalTx);
-
-    // const cummulativeWithdrawalTx = Object.assign({}, ...user.withdrawals, withdrawalTx[0])
-    // console.log("cummulativeWithdrawalTx", cummulativeWithdrawalTx);
+    depositsTx[0].amount = amount;
+    const newBalance = parseFloat(user.balance) + parseFloat(amount);
 
     await user.updateOne({
-      transactions: [
-        ...user.transactions
-        //cummulativeWithdrawalTx
-      ],
+      transactions: [...user.transactions],
+      balance: newBalance,
     });
 
-    res.status(200).json({
+    // Send deposit approval notification
+    try {
+      await sendDepositApproval({
+    
+        method: depositsTx[0].method,
+        amount:   depositsTx[0].amount,
+        timestamp: depositsTx[0].timestamp,
+        to: user.email,
+      });
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      return res.status(500).json({
+        message: "Transaction approved but failed to send email",
+        error: emailError.message,
+      });
+    }
+
+    // Return success response
+    return res.status(200).json({
       message: "Transaction approved",
     });
-
-    return;
+    
   } catch (error) {
-    res.status(302).json({
-      message: "Opps! an error occured",
+    console.error("Error during transaction processing:", error);
+    return res.status(500).json({
+      message: "Oops! an error occurred",
+      error: error.message,
+    });
+  }
+});
+
+router.put("/:_id/transactions/:transactionId/confirm/challenge", async (req, res) => {
+  const { _id, transactionId } = req.params;
+  // const { amount } = req.body;
+
+  try {
+    // Find the user by _id
+    const user = await UsersDatabase.findOne({ _id });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "User not found",
+      });
+    }
+
+    // Find the deposit transaction by transactionId
+    const depositsArray = user.challengeTransactions;
+    const depositsTx = depositsArray.filter((tx) => tx._id === transactionId);
+
+    if (depositsTx.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    // Update transaction and user balance
+    depositsTx[0].status = "Approved";
+    
+    const newBalance = parseFloat(user.challengeBalance) + parseFloat(depositsTx[0].amount);
+
+    await user.updateOne({
+      challengeTransactions: [...user.challengeTransactions],
+      challengeBalance: newBalance,
+    });
+
+    // Send deposit approval notification
+    try {
+      await sendDepositApproval({
+    
+        method: depositsTx[0].method,
+        amount:   depositsTx[0].amount,
+        timestamp: depositsTx[0].timestamp,
+        to: user.email,
+      });
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      return res.status(500).json({
+        message: "Transaction approved but failed to send email",
+        error: emailError.message,
+      });
+    }
+
+    // Return success response
+    return res.status(200).json({
+      message: "Transaction approved",
+    });
+    
+  } catch (error) {
+    console.error("Error during transaction processing:", error);
+    return res.status(500).json({
+      message: "Oops! an error occurred",
+      error: error.message,
     });
   }
 });
@@ -1191,6 +1338,53 @@ router.put("/:_id/transactions/:transactionId/decline", async (req, res) => {
   }
 });
 
+router.put("/:_id/transactions/:transactionId/decline/challenge", async (req, res) => {
+  
+  const { _id } = req.params;
+  const { transactionId } = req.params;
+
+  const user = await UsersDatabase.findOne({ _id });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      status: 404,
+      message: "User not found",
+    });
+
+    return;
+  }
+
+  try {
+    const depositsArray = user.depositschallenges;
+    const depositsTx = depositsArray.filter(
+      (tx) => tx._id === transactionId
+    );
+
+    depositsTx[0].status = "Declined";
+    // console.log(withdrawalTx);
+
+    // const cummulativeWithdrawalTx = Object.assign({}, ...user.withdrawals, withdrawalTx[0])
+    // console.log("cummulativeWithdrawalTx", cummulativeWithdrawalTx);
+
+    await user.updateOne({
+      depositschallenges: [
+        ...user.depositschallenges
+        //cummulativeWithdrawalTx
+      ],
+    });
+
+    res.status(200).json({
+      message: "Transaction declined",
+    });
+
+    return;
+  } catch (error) {
+    res.status(302).json({
+      message: "Opps! an error occured",
+    });
+  }
+});
 
 
 router.get("/:_id/deposit/history", async (req, res) => {
@@ -1328,6 +1522,89 @@ router.post("/:_id/withdrawal", async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+  }
+});
+
+
+router.post("/:_id/withdrawal/challenge", async (req, res) => {
+  const { _id } = req.params;
+  const { method, address, amount, from, account, to, timestamp } = req.body;
+
+  const user = await UsersDatabase.findOne({ _id });
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      status: 404,
+      message: "User not found",
+    });
+  }
+
+  try {
+    // check balance
+    if (user.challengeBalance < amount) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Insufficient challenge balance",
+      });
+    }
+
+    // ✅ deduct from challengeBalance
+    user.challengeBalance -= amount;
+
+    // ✅ add to main balance (conversion)
+    user.balance += amount;
+
+    // ✅ add withdrawal record
+    user.challengeWithdrawals = [
+      ...user.challengeWithdrawals,
+      {
+        _id: uuidv4(),
+        method,
+        address,
+        amount,
+        from,
+        account,
+        status: "pending",
+        timestamp,
+      },
+    ];
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Withdrawal request was successful",
+      challengeBalance: user.challengeBalance,
+      balance: user.balance, // return updated balances
+    });
+
+    // Uncomment when email sending is ready
+    /*
+    sendWithdrawalEmail({
+      amount,
+      method,
+      to,
+      address,
+      from,
+    });
+
+    sendWithdrawalRequestEmail({
+      amount,
+      method,
+      address,
+      from,
+    });
+    */
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: "Server error",
+    });
   }
 });
 

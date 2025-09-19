@@ -87,6 +87,9 @@ router.post("/register", async (req, res) => {
           usdt: { address: "" },
         },
         transactions: [],
+        challengeTransactions: [],
+        challengeWithdrawals: [],
+
         withdrawals: [],
       
 
