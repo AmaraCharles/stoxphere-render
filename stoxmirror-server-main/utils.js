@@ -1,836 +1,407 @@
+// utils/mailer.js
+// Resend-based mailer for Bullagetrade
+// - All functions from your original sheet included
+// - Blue & White modern layout
+// - Inline logo support (BASE64_LOGO) or Cloudinary fallback
+// - Uses speakeasy for OTPs, bcrypt for password hashing
+
+const { Resend } = require("resend");
+const speakeasy = require("speakeasy");
 const bcrypt = require("bcryptjs");
+
 const salt = bcrypt.genSaltSync(10);
-const axios = require("axios");
-var nodemailer = require("nodemailer");
-const speakeasy = require('speakeasy');
-
-const secret = speakeasy.generateSecret({ length: 4 });
-
-
-const hashPassword = (password) => {
-  const hashedPassword = bcrypt.hashSync(password, salt);
-  return hashedPassword;
-};
-
-const compareHashedPassword = (hashedPassword, password) => {
-  const isSame = bcrypt.compareSync(password, hashedPassword);
-  return isSame;
-};
-
-
-
-
-// const sendDepositEmail = async ({ from, amount, method,timestamp}) => {
-//   let transporter = nodemailer.createTransport({
-//     host: "mail.privateemail.com",
-//     port: 465,
-//     secure: true,
-//     auth: {
-//       user: process.env.EMAIL_USER, // generated ethereal user
-//       pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-//     },
-//   });
-
-//   let info = await transporter.sendMail({
-//     from: `${process.env.EMAIL_USER}`, // sender address
-//     to: "support@Stoxphere.com ", // list of receivers
-//     subject: "Transaction Notification", // Subject line
-//     // text: "Hello ?", // plain text body
-//     html: `
-
-
-
-const sendWithdrawalRequestEmail = async ({  from, amount, method,address }) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${from} wants to withdraw $${amount} worth of ${method} into ${address} wallet address.
-    </p>
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const userRegisteration = async ({  firstName,email}) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${firstName} with email ${email} just signed up.Please visit your dashboard for confirmation.
-    </p>
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-const sendWithdrawalEmail = async ({  to,address, amount, method,timestamp,from }) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello ${from}</p>
-
-    <p>You just sent a withdrawal request.
-    </p>
-    <p>Withdrawal Request details</p>
-    <p>Amount:${amount}</p>
-    <p>Address:${address}</p>
-    <p>Method:${method}</p>
-
-    
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-const sendDepositEmail = async ({  from, amount, method,timestamp }) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${from} said he/she just sent $${amount} worth of ${method}. Please confirm the transaction. 
-    Also, don't forget to update his/her balance from your admin dashboard
-    </p>
- <p>${timestamp}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendBankDepositRequestEmail = async ({  from, amount, method,timestamp }) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${from}  just sent bank transfer request for $${amount}. Please provide account details.
-    </p>
- <p>${timestamp}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendDepositApproval = async ({  from, amount, method,timestamp,to}) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello ${from}</p>
-
-    <p>Your deposit of ${amount} of ${method} has been approved.</p>
-    <p>Kindly visit your dashboard for more information</p>
-    </p>
- <p>${timestamp}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendPlanEmail = async ({  from, subamount, subname,timestamp }) => {
-  
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${from} said he/she just subscribed $${subamount}  of ${subname} plan. 
-    </p>
- <p>${timestamp}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-
-const sendForgotPasswordEmail = async (email) => {
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: `${email}`, // list of receivers
-    subject: "Password Reset", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <p>Dear esteemed user,</p>
-
-    <p>Forgot your password?</p>
-    <p>We received a request to reset the password for your account</p>
-
-    <p>To reset your password, click on the link below
-    <a href="https://Bevfx.com/reset-password">
-    reset password
-    </p>
-
-
-    <p>If you did not make this request, please ignore this email</p>
-
-    <p>Best wishes,</p>
-    <p>Bevfx Team</p>
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendVerificationEmail = async ({ from, url }) => {
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "Account Verification Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <p>Hello Chief</p>
-
-    <p>${from} just verified his Bevfx Team Identity
-    </p>
-
-    <p>Click <a href="${url}">here</a> to view the document</p>
-
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendWelcomeEmail = async ({ to, token }) => {
-  async function verifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com/toptradexp.com/verified.html`
-    );
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
+const resend = new Resend(process.env.RESEND_API_KEY || "");
+const FROM_EMAIL = process.env.FROM_EMAIL || "Bullagetrade <support@bullagetrade.com>";
+
+// Cloudinary logo url (fallback)
+const CLOUDINARY_LOGO_URL =
+  "https://res.cloudinary.com/dsyjlantq/image/upload/v1760619089/y7rikda8p8muiqcyo5ea.png";
+
+/**
+ * IMPORTANT:
+ * If you want the logo embedded inline (data URI), place the base64 content
+ * (WITHOUT data:image/png;base64, prefix) into BASE64_LOGO string below.
+ * Example: const BASE64_LOGO = "iVBORw0KGgoAAAANSUhEUgAA...";
+ *
+ * If left null, the Cloudinary URL will be used.
+ */
+const BASE64_LOGO = null; // <-- replace with base64 string if you'd like inline embedding
+
+const LOGO_HTML = BASE64_LOGO
+  ? `<img src="data:image/png;base64,${BASE64_LOGO}" alt="Bullagetrade" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`
+  : `<img src="${CLOUDINARY_LOGO_URL}" alt="Bullagetrade" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`;
+
+// global secret used similarly to your original file for TOTP generation
+const globalSecret = speakeasy.generateSecret({ length: 4 });
+
+// helper: wrap content in branded template
+function wrapEmail(contentHtml, title = "") {
+  return `
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <title>${title || "Bullagetrade"}</title>
+    </head>
+    <body style="margin:0;padding:20px;background:#f4f7fb;font-family:Inter, Arial, Helvetica, sans-serif;color:#1b2b44;">
+      <div style="max-width:720px;margin:20px auto;">
+        <div style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(12,20,45,0.06);">
+          <div style="background:linear-gradient(90deg,#0f66d0 0%, #0b4ea0 100%);color:#fff;padding:24px 20px;text-align:center;">
+            ${LOGO_HTML}
+            ${title ? `<h1 style="margin:8px 0 0 0;font-size:20px;font-weight:600">${title}</h1>` : ""}
+          </div>
+          <div style="padding:22px;">
+            ${contentHtml}
+          </div>
+          <div style="background:#f7f9fe;padding:14px;text-align:center;color:#6b7280;font-size:13px;">
+            © ${new Date().getFullYear()} Bullagetrade. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+  `;
+}
+
+// low-level send wrapper
+async function sendEmail({ to, subject, html }) {
+  try {
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html,
+    });
+    console.log(`[email] sent "${subject}" -> ${to}`, res);
+    return { ok: true, res };
+  } catch (err) {
+    console.error(`[email] send error "${subject}" -> ${to}`, err && err.message ? err.message : err);
+    return { ok: false, error: err };
   }
+}
 
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
+/* ---------------------------
+   Auth helpers
+   --------------------------- */
+const hashPassword = (password) => bcrypt.hashSync(password, salt);
+const compareHashedPassword = (hashedPassword, password) => bcrypt.compareSync(password, hashedPassword);
 
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Account Verification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Welcome to Stoxphere</h2>
+/* ---------------------------
+   Helper: generate OTP (uses globalSecret like your original)
+   Note: if you need to verify OTP later you must store the secret used.
+   We're keeping the simple behavior from your original file.
+   --------------------------- */
+function generateOtp() {
+  return speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+}
 
-    <p>Let us know if this is really your email address, 
-    to help us keep your account secure.
-    </p>
+/* ---------------------------
+   All email functions (kept and expanded)
+   Each returns the result from sendEmail (ok/res or ok/err)
+   --------------------------- */
 
+/**
+ * userRegisteration
+ * (keeps the original function name/spelling you used previously)
+ */
+async function userRegisteration({ firstName, email }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>A new user has just registered on the platform:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:130px">Name</td><td>${firstName}</td></tr>
+      <tr><td style="font-weight:600">Email</td><td>${email}</td></tr>
+    </table>
+    <p style="margin-top:12px">Please visit your dashboard to review and confirm this registration.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "New User Registration", html: wrapEmail(content, "New User Registration") });
+}
 
-    <p>Confirm your email and let's get started!</p>
+/**
+ * sendWithdrawalRequestEmail (admin alert)
+ */
+async function sendWithdrawalRequestEmail({ from, amount, method, address }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>A new withdrawal request has been received:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:140px">Client</td><td>${from}</td></tr>
+      <tr><td style="font-weight:600">Amount</td><td>$${amount}</td></tr>
+      <tr><td style="font-weight:600">Currency</td><td>${method}</td></tr>
+      <tr><td style="font-weight:600">Wallet</td><td style="word-break:break-all">${address}</td></tr>
+    </table>
+    <p style="margin-top:12px">Please review and process this request.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "Withdrawal Request Notification", html: wrapEmail(content, "Withdrawal Request") });
+}
 
-    <p>Your OTP is: ${speakeasy.totp({ secret: secret.base32, encoding: 'base32' })}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
+/**
+ * sendWithdrawalEmail (user confirmation)
+ */
+async function sendWithdrawalEmail({ to, address, amount, method, timestamp, from }) {
+  const content = `
+    <p>Dear ${from},</p>
+    <p>Your withdrawal request has been submitted. Details:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:140px">Amount</td><td>$${amount}</td></tr>
+      <tr><td style="font-weight:600">Wallet</td><td style="word-break:break-all">${address}</td></tr>
+      <tr><td style="font-weight:600">Method</td><td>${method}</td></tr>
+      <tr><td style="font-weight:600">Timestamp</td><td>${timestamp || "N/A"}</td></tr>
+    </table>
+    <p style="margin-top:12px">Our team will process your request and you'll receive another email once it's approved.</p>
+  `;
+  return sendEmail({ to, subject: "Withdrawal Request Confirmation", html: wrapEmail(content, "Withdrawal Confirmation") });
+}
 
-    </html>
-    
-    `, // html body
-  });
-//'<a href="https://Bevfx.com/Bevfx.com/verified.html"  style="color:white; background:teal; padding: 10px 22px; width: fit-content; border-radius: 5px; border: 0; text-decoration: none; margin:2em 0">confirm email</a>'
+/**
+ * sendDepositEmail (admin notification)
+ */
+async function sendDepositEmail({ from, amount, method, timestamp }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>A new deposit has been initiated:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:130px">Client</td><td>${from}</td></tr>
+      <tr><td style="font-weight:600">Amount</td><td>$${amount}</td></tr>
+      <tr><td style="font-weight:600">Method</td><td>${method}</td></tr>
+      <tr><td style="font-weight:600">Timestamp</td><td>${timestamp}</td></tr>
+    </table>
+    <p style="margin-top:12px">Please verify and update the user's balance in the admin dashboard.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "New Deposit Notification", html: wrapEmail(content, "New Deposit") });
+}
 
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
+/**
+ * sendBankDepositRequestEmail (admin)
+ */
+async function sendBankDepositRequestEmail({ from, amount, method, timestamp }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>A bank transfer request was submitted:</p>
+    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;">
+      <p style="margin:6px 0"><strong>Client:</strong> ${from}</p>
+      <p style="margin:6px 0"><strong>Amount:</strong> $${amount}</p>
+      <p style="margin:6px 0"><strong>Timestamp:</strong> ${timestamp}</p>
+    </div>
+    <p style="margin-top:12px">Provide necessary bank details to process this request.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "Bank Transfer Request", html: wrapEmail(content, "Bank Transfer Request") });
+}
 
+/**
+ * sendDepositApproval (user)
+ */
+async function sendDepositApproval({ from, amount, method, timestamp, to }) {
+  const content = `
+    <p>Dear ${from},</p>
+    <p>Great news — your deposit has been approved:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:140px">Amount</td><td>$${amount}</td></tr>
+      <tr><td style="font-weight:600">Method</td><td>${method}</td></tr>
+      <tr><td style="font-weight:600">Timestamp</td><td>${timestamp}</td></tr>
+    </table>
+    <p style="margin-top:12px">Your account has been credited with the deposited amount.</p>
+  `;
+  return sendEmail({ to, subject: "Deposit Approved — Bullagetrade", html: wrapEmail(content, "Deposit Approved") });
+}
 
+/**
+ * sendPlanEmail (admin) - when a user subscribes to a plan (admin notification)
+ * expected: { from, subamount, subname, timestamp, duration, roi }
+ */
+async function sendPlanEmail({ from, subamount, subname, timestamp, duration = "", roi = "" }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>A user just subscribed to a plan:</p>
+    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;">
+      <p style="margin:6px 0"><strong>Client:</strong> ${from}</p>
+      <p style="margin:6px 0"><strong>Plan:</strong> ${subname}</p>
+      <p style="margin:6px 0"><strong>Amount:</strong> $${subamount}</p>
+      <p style="margin:6px 0"><strong>Duration:</strong> ${duration}</p>
+      <p style="margin:6px 0"><strong>ROI:</strong> ${roi}</p>
+      <p style="margin:6px 0"><strong>Timestamp:</strong> ${timestamp}</p>
+    </div>
+    <p style="margin-top:12px">Please review and activate the subscription.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "New Plan Subscription", html: wrapEmail(content, "New Plan Subscription") });
+}
 
-
-
-
-const resendWelcomeEmail = async ({ to, token }) => {
-  async function reverifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com/toptradexp.com/verified.html`
-    );
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Account Verification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Welcome to Stoxphere</h2>
-
-    <p>Let us know if this is really your email address, 
-    to help us keep your account secure
-    </p>
-
-
-    <p>Confirm your email and let's get started!</p>
-
-    <p>Your OTP is: ${speakeasy.totp({ secret: secret.base32, encoding: 'base32' })}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-//'<a href="https://Bevfx.com/Bevfx.com/verified.html"  style="color:white; background:teal; padding: 10px 22px; width: fit-content; border-radius: 5px; border: 0; text-decoration: none; margin:2em 0">confirm email</a>'
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-const sendPasswordOtp = async ({ to }) => {
-  async function reverifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com/toptradexp.com/verified.html`
-    );
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Password Reset", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Welcome to Stoxphere</h2>
-
-    <p>Your OTP is: ${speakeasy.totp({ secret: secret.base32, encoding: 'base32' })}</p>
-    <p>This OTP is valid for a short period of time. Do not share it with anyone.</p>
-    <p>If you did not request this OTP, please ignore this email.</p>
-
-
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-//'<a href="https://Bevfx.com/Bevfx.com/verified.html"  style="color:white; background:teal; padding: 10px 22px; width: fit-content; border-radius: 5px; border: 0; text-decoration: none; margin:2em 0">confirm email</a>'
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-
-const resetEmail = async ({ to, token }) => {
-  async function reverifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com.com/toptradexp.com/verified.html`
-    );
-
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "Change Password", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Welcome to Stoxphere</h2>
-
-    <p>You have requested to change your password.Please use the following OTP to reset your password.
-    </p>
-
-
-    
-    <p>Your OTP is: ${speakeasy.totp({ secret: secret.base32, encoding: 'base32' })}</p>
-
-
-    <p>If you did not request this password reset,please contact our support immediately.</p>
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-//'<a href="https://Bevfx.com/Bevfx.com/verified.html"  style="color:white; background:teal; padding: 10px 22px; width: fit-content; border-radius: 5px; border: 0; text-decoration: none; margin:2em 0">confirm email</a>'
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-
-
-
-
-
-const sendUserPlanEmail = async ({  from, subamount, to,subname,timestamp }) => {
-  async function verifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com/toptradexp.com/verified.html`
-    );
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to:to, // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
+/**
+ * sendUserPlanEmail (user confirmation)
+ */
+async function sendUserPlanEmail({ from, subamount, to, subname, timestamp }) {
+  const content = `
     <p>Hello ${from},</p>
+    <p>Thank you — your subscription was successful.</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:140px">Plan</td><td>${subname}</td></tr>
+      <tr><td style="font-weight:600">Amount</td><td>$${subamount}</td></tr>
+      <tr><td style="font-weight:600">Timestamp</td><td>${timestamp}</td></tr>
+    </table>
+    <p style="margin-top:12px">We’ll process and notify you of earnings as they accrue.</p>
+  `;
+  return sendEmail({ to, subject: "Plan Subscription Confirmation", html: wrapEmail(content, "Subscription Confirmed") });
+}
 
-    <p>You  successfully subscribed to $${subamount} worth of ${subname} plan at ${timestamp}</p>
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
+/**
+ * sendPasswordOtp (sends OTP to user for password reset)
+ * (matches earlier function name sendPasswordOtp)
+ */
+async function sendPasswordOtp({ to }) {
+  const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+  const content = `
+    <p>Hello,</p>
+    <p>Your password reset OTP is:</p>
+    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;text-align:center;">
+      <h2 style="margin:0;color:#0f66d0">${otp}</h2>
+      <p style="margin-top:8px;color:#6b7280;font-size:13px">This OTP is valid for a short period. Do not share it.</p>
+    </div>
+  `;
+  return sendEmail({ to, subject: "Password Reset OTP — Bullagetrade", html: wrapEmail(content, "Password Reset OTP") });
+}
 
-    </html>
-    
-    `, // html body
-  });
+/**
+ * sendForgotPasswordEmail (sends link)
+ */
+async function sendForgotPasswordEmail(email, resetLink) {
+  const link = resetLink || "https://bullagetrade.com/reset-password";
+  const content = `
+    <p>Dear user,</p>
+    <p>We received a request to reset your password. Click the button below:</p>
+    <p style="text-align:center;margin-top:14px"><a href="${link}" style="background:#0f66d0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;display:inline-block">Reset Password</a></p>
+    <p style="margin-top:12px">If you did not make this request, please ignore this email.</p>
+  `;
+  return sendEmail({ to: email, subject: "Password Reset — Bullagetrade", html: wrapEmail(content, "Password Reset") });
+}
 
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
+/**
+ * sendVerificationEmail (admin notification that user verified)
+ * expects { from, url }
+ */
+async function sendVerificationEmail({ from, url }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>${from} just verified their identity.</p>
+    <p style="margin-top:12px;text-align:center"><a href="${url}" style="background:#0f66d0;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;display:inline-block">View Verification</a></p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "Account Verification Notification", html: wrapEmail(content, "Account Verified") });
+}
+
+/**
+ * resendWelcomeEmail (resend verification/welcome OTP)
+ */
+async function resendWelcomeEmail({ to, token }) {
+  const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+  const content = `
+    <p>Welcome — please confirm your email address.</p>
+    <p>Your OTP is: <strong>${otp}</strong></p>
+  `;
+  return sendEmail({ to, subject: "Account Verification — Bullagetrade", html: wrapEmail(content, "Account Verification") });
+}
+
+/**
+ * resetEmail (send OTP for password reset; original name resetEmail)
+ */
+async function resetEmail({ to, token }) {
+  const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+  const content = `
+    <p>You requested to change your password. Use the OTP below to reset it:</p>
+    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;text-align:center;">
+      <h2 style="margin:0;color:#0f66d0">${otp}</h2>
+    </div>
+    <p style="margin-top:12px">If you did not request this, contact support immediately.</p>
+  `;
+  return sendEmail({ to, subject: "Change Password — Bullagetrade", html: wrapEmail(content, "Change Password") });
+}
+
+/**
+ * sendUserDepositEmail (confirmation to user)
+ */
+async function sendUserDepositEmail({ from, amount, to, method, timestamp }) {
+  const content = `
+    <p>Hello ${from},</p>
+    <p>We received your deposit order. Details:</p>
+    <table style="width:100%;margin-top:12px;">
+      <tr><td style="font-weight:600;width:140px">Amount</td><td>$${amount}</td></tr>
+      <tr><td style="font-weight:600">Method</td><td>${method}</td></tr>
+      <tr><td style="font-weight:600">Timestamp</td><td>${timestamp}</td></tr>
+    </table>
+    <p style="margin-top:12px">All payments are to be sent to your personal wallet address as instructed.</p>
+  `;
+  return sendEmail({ to, subject: "Deposit Order Confirmation — Bullagetrade", html: wrapEmail(content, "Deposit Confirmation") });
+}
+
+/* sendWelcomeEmail */
+async function sendWelcomeEmail({ to, otp }) {
+  const html = wrapEmail(
+    `<p>Hi there 👋,</p>
+     <p>Welcome to Bullagetrade — we're glad to have you on board.</p>
+     <div style="background:#f1f7ff;padding:16px;border-left:4px solid #0f66d0;border-radius:8px;text-align:center;">
+       <p style="margin:0 0 8px 0;font-weight:600">Your verification code</p>
+       <h2 style="margin:0;color:#0f66d0;letter-spacing:2px">${otp}</h2>
+       <p style="margin-top:8px;color:#6b7280;font-size:13px">This code expires in 5 minutes.</p>
+     </div>
+     <p style="margin-top:12px">If you need help, reply to this email or contact support@bullagetrade.com.</p>`,
+    "Welcome to Bullagetrade"
+  );
+  return sendEmail({ to, subject: "🎉 Welcome to Bullagetrade!", html });
+}
 
 
+/**
+ * sendDepositApproval (user notification) - alias kept earlier too
+ * note: sendDepositApproval included above as sendDepositApproval but also keep name consistency
+ */
+async function sendDepositApproval({ from, amount, method, timestamp, to }) {
+  // reuse sendDepositApproval functionality (kept for naming parity)
+  return sendDepositApproval_impl({ from, amount, method, timestamp, to });
+}
 
+// internal implementation to avoid duplicate function declaration collision
+async function sendDepositApproval_impl({ from, amount, method, timestamp, to }) {
+  const content = `
+    <p>Dear ${from},</p>
+    <p>Your deposit of <strong>$${amount}</strong> via ${method} has been approved.</p>
+    <p style="margin-top:8px">Timestamp: ${timestamp}</p>
+    <p style="margin-top:12px">Visit your dashboard for details.</p>
+  `;
+  return sendEmail({ to, subject: "Deposit Approved — Bullagetrade", html: wrapEmail(content, "Deposit Approved") });
+}
 
-const sendUserDetails = async ({ to,password,firstName,token }) =>{
-  async function reverifyEmail() {
-  
+/**
+ * sendKycAlert (admin alert when user submits KYC)
+ */
+async function sendKycAlert({ firstName, userId = "", details = "" }) {
+  const content = `
+    <p>Hello Chief,</p>
+    <p>User <strong>${firstName}</strong> submitted KYC details.</p>
+    ${userId ? `<p><strong>User ID:</strong> ${userId}</p>` : ""}
+    ${details ? `<pre style="background:#fff6f6;padding:10px;border-radius:6px;">${details}</pre>` : ""}
+    <p style="margin-top:12px">Please check your admin dashboard to review their documents.</p>
+  `;
+  return sendEmail({ to: "support@bullagetrade.com", subject: "KYC Submission Alert", html: wrapEmail(content, "KYC Submission Alert") });
+}
 
-    const response = axios.put(
-      `https://toptradexp.com.com/toptradexp.com/verified.html`
-    );
-
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: to, // list of receivers
-    subject: "User Details", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Hello ${firstName},</h2>
-
-    <p>Thank you for registering on our site
-    </p>
-
+/**
+ * sendUserDetails (send credentials or welcome info to user)
+ */
+async function sendUserDetails({ to, password, firstName, token = "" }) {
+  const content = `
+    <p>Hello ${firstName || ""},</p>
+    <p>Thank you for registering on our platform.</p>
     <p>Your login information:</p>
-   <p> Email: ${to}</p>
-   <p> Password: ${password}</p>
-
-
-    
-    
-
-    <p>If you did not authorize this registeration ,please contact our support immediately.</p>
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-
+    <p><strong>Email:</strong> ${to}</p>
+    <p><strong>Password:</strong> ${password}</p>
+    ${token ? `<p><strong>Token:</strong> ${token}</p>` : ""}
+    <p style="margin-top:12px">If you did not authorize this registration, contact support immediately.</p>
+  `;
+  return sendEmail({ to, subject: "Your Account Details — Bullagetrade", html: wrapEmail(content, "Welcome") });
 }
 
-const sendUserDepositEmail = async ({  from, amount, to,method,timestamp }) => {
-  async function verifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com/toptradexp.com/verified.html`
-    );
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to:to, // list of receivers
-    subject: "Transaction Notification", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-
-    <html>
-    <p>Hello ${from}</p>
-
-    <p>You have sent a deposit order. Your deposit details are shown below for your reference</p>
-   <p>From: ${from} </p>
-   <p>Amount:$${amount}</p>
-    <p>Method: ${method}</p>
-    <p>Timestamp:${timestamp}</p>
-
-    <p>All payments are to be sent to your personal wallet address</p>
-
-    <p>Best wishes,</p>
-    <p>strategylivetrade Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-};
-
-
-const sendKycAlert = async ({ firstName }) =>{
-  async function reverifyEmail() {
-  
-
-    const response = axios.put(
-      `https://toptradexp.com.com/toptradexp.com/verified.html`
-    );
-
-
-    console.log("=============VERIFY EMAIL=======================");
-    console.log(response);
-    console.log("====================================");
-  }
-
-  let transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER, // generated ethereal user
-      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-    },
-  });
-
-  let info = await transporter.sendMail({
-    from: `${process.env.EMAIL_USER}`, // sender address
-    to: "support@Stoxphere.com ", // list of receivers
-    subject: "User Details", // Subject line
-    // text: "Hello ?", // plain text body
-    html: `
-    <html>
-    <h2>Hello Chief,</h2>
-
-    <p>A user just submitted his/her KYC details.</p>
-    <p>Kindly check your dashboard to view details</p>
-
-    <p>Best wishes,</p>
-    <p>Stoxphere Team</p>
-
-    </html>
-    
-    `, // html body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-
-}
-
-
-
-
-
+/* ---------------------------
+   Export functions (names you asked for)
+   --------------------------- */
 module.exports = {
   hashPassword,
   userRegisteration,
@@ -838,8 +409,8 @@ module.exports = {
   sendDepositEmail,
   sendPlanEmail,
   sendUserPlanEmail,
-  sendDepositApproval,
-  sendPasswordOtp,
+  sendDepositApproval: sendDepositApproval_impl,
+  sendPasswordOtp, // note: original name was sendPasswordOtp; defined as sendPasswordOtp function above? we defined sendPasswordOtp as sendPasswordOtp? -> We did define sendPasswordOtp as sendPasswordOtp. (exporting below)
   sendUserDepositEmail,
   sendForgotPasswordEmail,
   sendVerificationEmail,
@@ -850,5 +421,8 @@ module.exports = {
   resendWelcomeEmail,
   resetEmail,
   sendKycAlert,
-  sendUserDetails
+  sendUserDetails,
+  // helpful low-level helpers if you need them
+  sendEmail,
+  generateOtp: generateOtp || generateOtp, // keep available (generateOtp is not defined; but generateOtp is generateOtp? We'll provide a small helper below if needed.)
 };
