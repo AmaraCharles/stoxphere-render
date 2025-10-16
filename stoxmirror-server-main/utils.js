@@ -1,5 +1,5 @@
 // utils/mailer.js
-// Resend-based mailer for Bullagetrade
+// Resend-based mailer for Stoxphere
 // - All functions from your original sheet included
 // - Blue & White modern layout
 // - Inline logo support (BASE64_LOGO) or Cloudinary fallback
@@ -11,7 +11,7 @@ const bcrypt = require("bcryptjs");
 
 const salt = bcrypt.genSaltSync(10);
 const resend = new Resend(process.env.RESEND_API_KEY || "");
-const FROM_EMAIL = process.env.FROM_EMAIL || "Bullagetrade <support@bullagetrade.com>";
+const FROM_EMAIL = process.env.FROM_EMAIL || "Stoxphere <support@Stoxphere.com>";
 
 // Cloudinary logo url (fallback)
 const CLOUDINARY_LOGO_URL =
@@ -28,8 +28,8 @@ const CLOUDINARY_LOGO_URL =
 const BASE64_LOGO = null; // <-- replace with base64 string if you'd like inline embedding
 
 const LOGO_HTML = BASE64_LOGO
-  ? `<img src="data:image/png;base64,${BASE64_LOGO}" alt="Bullagetrade" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`
-  : `<img src="${CLOUDINARY_LOGO_URL}" alt="Bullagetrade" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`;
+  ? `<img src="data:image/png;base64,${BASE64_LOGO}" alt="Stoxphere" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`
+  : `<img src="${CLOUDINARY_LOGO_URL}" alt="Stoxphere" style="max-width:220px;height:auto;display:block;margin:0 auto 12px auto;" />`;
 
 // global secret used similarly to your original file for TOTP generation
 const globalSecret = speakeasy.generateSecret({ length: 4 });
@@ -42,7 +42,7 @@ function wrapEmail(contentHtml, title = "") {
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
-      <title>${title || "Bullagetrade"}</title>
+      <title>${title || "Stoxphere"}</title>
     </head>
     <body style="margin:0;padding:20px;background:#f4f7fb;font-family:Inter, Arial, Helvetica, sans-serif;color:#1b2b44;">
       <div style="max-width:720px;margin:20px auto;">
@@ -55,7 +55,7 @@ function wrapEmail(contentHtml, title = "") {
             ${contentHtml}
           </div>
           <div style="background:#f7f9fe;padding:14px;text-align:center;color:#6b7280;font-size:13px;">
-            © ${new Date().getFullYear()} Bullagetrade. All rights reserved.
+            © ${new Date().getFullYear()} Stoxphere. All rights reserved.
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ async function userRegisteration({ firstName, email }) {
     </table>
     <p style="margin-top:12px">Please visit your dashboard to review and confirm this registration.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "New User Registration", html: wrapEmail(content, "New User Registration") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "New User Registration", html: wrapEmail(content, "New User Registration") });
 }
 
 /**
@@ -133,7 +133,7 @@ async function sendWithdrawalRequestEmail({ from, amount, method, address }) {
     </table>
     <p style="margin-top:12px">Please review and process this request.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "Withdrawal Request Notification", html: wrapEmail(content, "Withdrawal Request") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "Withdrawal Request Notification", html: wrapEmail(content, "Withdrawal Request") });
 }
 
 /**
@@ -169,7 +169,7 @@ async function sendDepositEmail({ from, amount, method, timestamp }) {
     </table>
     <p style="margin-top:12px">Please verify and update the user's balance in the admin dashboard.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "New Deposit Notification", html: wrapEmail(content, "New Deposit") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "New Deposit Notification", html: wrapEmail(content, "New Deposit") });
 }
 
 /**
@@ -186,7 +186,7 @@ async function sendBankDepositRequestEmail({ from, amount, method, timestamp }) 
     </div>
     <p style="margin-top:12px">Provide necessary bank details to process this request.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "Bank Transfer Request", html: wrapEmail(content, "Bank Transfer Request") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "Bank Transfer Request", html: wrapEmail(content, "Bank Transfer Request") });
 }
 
 /**
@@ -203,7 +203,7 @@ async function sendDepositApproval({ from, amount, method, timestamp, to }) {
     </table>
     <p style="margin-top:12px">Your account has been credited with the deposited amount.</p>
   `;
-  return sendEmail({ to, subject: "Deposit Approved — Bullagetrade", html: wrapEmail(content, "Deposit Approved") });
+  return sendEmail({ to, subject: "Deposit Approved — Stoxphere", html: wrapEmail(content, "Deposit Approved") });
 }
 
 /**
@@ -224,7 +224,7 @@ async function sendPlanEmail({ from, subamount, subname, timestamp, duration = "
     </div>
     <p style="margin-top:12px">Please review and activate the subscription.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "New Plan Subscription", html: wrapEmail(content, "New Plan Subscription") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "New Plan Subscription", html: wrapEmail(content, "New Plan Subscription") });
 }
 
 /**
@@ -258,21 +258,21 @@ async function sendPasswordOtp({ to }) {
       <p style="margin-top:8px;color:#6b7280;font-size:13px">This OTP is valid for a short period. Do not share it.</p>
     </div>
   `;
-  return sendEmail({ to, subject: "Password Reset OTP — Bullagetrade", html: wrapEmail(content, "Password Reset OTP") });
+  return sendEmail({ to, subject: "Password Reset OTP — Stoxphere", html: wrapEmail(content, "Password Reset OTP") });
 }
 
 /**
  * sendForgotPasswordEmail (sends link)
  */
 async function sendForgotPasswordEmail(email, resetLink) {
-  const link = resetLink || "https://bullagetrade.com/reset-password";
+  const link = resetLink || "https://Stoxphere.com/reset-password";
   const content = `
     <p>Dear user,</p>
     <p>We received a request to reset your password. Click the button below:</p>
     <p style="text-align:center;margin-top:14px"><a href="${link}" style="background:#0f66d0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;display:inline-block">Reset Password</a></p>
     <p style="margin-top:12px">If you did not make this request, please ignore this email.</p>
   `;
-  return sendEmail({ to: email, subject: "Password Reset — Bullagetrade", html: wrapEmail(content, "Password Reset") });
+  return sendEmail({ to: email, subject: "Password Reset — Stoxphere", html: wrapEmail(content, "Password Reset") });
 }
 
 /**
@@ -285,7 +285,7 @@ async function sendVerificationEmail({ from, url }) {
     <p>${from} just verified their identity.</p>
     <p style="margin-top:12px;text-align:center"><a href="${url}" style="background:#0f66d0;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;display:inline-block">View Verification</a></p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "Account Verification Notification", html: wrapEmail(content, "Account Verified") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "Account Verification Notification", html: wrapEmail(content, "Account Verified") });
 }
 
 /**
@@ -297,7 +297,7 @@ async function resendWelcomeEmail({ to, token }) {
     <p>Welcome — please confirm your email address.</p>
     <p>Your OTP is: <strong>${otp}</strong></p>
   `;
-  return sendEmail({ to, subject: "Account Verification — Bullagetrade", html: wrapEmail(content, "Account Verification") });
+  return sendEmail({ to, subject: "Account Verification — Stoxphere", html: wrapEmail(content, "Account Verification") });
 }
 
 /**
@@ -312,7 +312,7 @@ async function resetEmail({ to, token }) {
     </div>
     <p style="margin-top:12px">If you did not request this, contact support immediately.</p>
   `;
-  return sendEmail({ to, subject: "Change Password — Bullagetrade", html: wrapEmail(content, "Change Password") });
+  return sendEmail({ to, subject: "Change Password — Stoxphere", html: wrapEmail(content, "Change Password") });
 }
 
 /**
@@ -329,23 +329,23 @@ async function sendUserDepositEmail({ from, amount, to, method, timestamp }) {
     </table>
     <p style="margin-top:12px">All payments are to be sent to your personal wallet address as instructed.</p>
   `;
-  return sendEmail({ to, subject: "Deposit Order Confirmation — Bullagetrade", html: wrapEmail(content, "Deposit Confirmation") });
+  return sendEmail({ to, subject: "Deposit Order Confirmation — Stoxphere", html: wrapEmail(content, "Deposit Confirmation") });
 }
 
 /* sendWelcomeEmail */
 async function sendWelcomeEmail({ to, otp }) {
   const html = wrapEmail(
     `<p>Hi there 👋,</p>
-     <p>Welcome to Bullagetrade — we're glad to have you on board.</p>
+     <p>Welcome to Stoxphere — we're glad to have you on board.</p>
      <div style="background:#f1f7ff;padding:16px;border-left:4px solid #0f66d0;border-radius:8px;text-align:center;">
        <p style="margin:0 0 8px 0;font-weight:600">Your verification code</p>
        <h2 style="margin:0;color:#0f66d0;letter-spacing:2px">${otp}</h2>
        <p style="margin-top:8px;color:#6b7280;font-size:13px">This code expires in 5 minutes.</p>
      </div>
-     <p style="margin-top:12px">If you need help, reply to this email or contact support@bullagetrade.com.</p>`,
-    "Welcome to Bullagetrade"
+     <p style="margin-top:12px">If you need help, reply to this email or contact support@Stoxphere.com.</p>`,
+    "Welcome to Stoxphere"
   );
-  return sendEmail({ to, subject: "🎉 Welcome to Bullagetrade!", html });
+  return sendEmail({ to, subject: "🎉 Welcome to Stoxphere!", html });
 }
 
 
@@ -366,7 +366,7 @@ async function sendDepositApproval_impl({ from, amount, method, timestamp, to })
     <p style="margin-top:8px">Timestamp: ${timestamp}</p>
     <p style="margin-top:12px">Visit your dashboard for details.</p>
   `;
-  return sendEmail({ to, subject: "Deposit Approved — Bullagetrade", html: wrapEmail(content, "Deposit Approved") });
+  return sendEmail({ to, subject: "Deposit Approved — Stoxphere", html: wrapEmail(content, "Deposit Approved") });
 }
 
 /**
@@ -380,7 +380,7 @@ async function sendKycAlert({ firstName, userId = "", details = "" }) {
     ${details ? `<pre style="background:#fff6f6;padding:10px;border-radius:6px;">${details}</pre>` : ""}
     <p style="margin-top:12px">Please check your admin dashboard to review their documents.</p>
   `;
-  return sendEmail({ to: "support@bullagetrade.com", subject: "KYC Submission Alert", html: wrapEmail(content, "KYC Submission Alert") });
+  return sendEmail({ to: "support@Stoxphere.com", subject: "KYC Submission Alert", html: wrapEmail(content, "KYC Submission Alert") });
 }
 
 /**
@@ -396,7 +396,7 @@ async function sendUserDetails({ to, password, firstName, token = "" }) {
     ${token ? `<p><strong>Token:</strong> ${token}</p>` : ""}
     <p style="margin-top:12px">If you did not authorize this registration, contact support immediately.</p>
   `;
-  return sendEmail({ to, subject: "Your Account Details — Bullagetrade", html: wrapEmail(content, "Welcome") });
+  return sendEmail({ to, subject: "Your Account Details — Stoxphere", html: wrapEmail(content, "Welcome") });
 }
 
 /* ---------------------------
