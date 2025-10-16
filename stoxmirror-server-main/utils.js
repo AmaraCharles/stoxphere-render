@@ -15,7 +15,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || "Bullagetrade <support@bullagetrade
 
 // Cloudinary logo url (fallback)
 const CLOUDINARY_LOGO_URL =
-  "https://res.cloudinary.com/dsyjlantq/image/upload/v1760619089/y7rikda8p8muiqcyo5ea.png";
+  "https://res.cloudinary.com/dsyjlantq/image/upload/v1760653300/zeckonlcd7tod81h2z0q.png";
 
 /**
  * IMPORTANT:
