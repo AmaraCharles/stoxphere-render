@@ -58,6 +58,7 @@ const UsersSchema = new mongoose.Schema(
       },
 
       transactions: { type: Array, default: [] },
+      planHistory: { type: Array, default: [] },
        challengeTransactions: { type: Array, default: [] },
         challengeWithdrawals: { type: Array, default: [] },
       withdrawals: { type: Array, default: [] }

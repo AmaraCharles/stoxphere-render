@@ -86,6 +86,7 @@ router.post("/register", async (req, res) => {
           btc: { address: "" },
           usdt: { address: "" },
         },
+        planHistory: [],
         transactions: [],
         challengeTransactions: [],
         challengeWithdrawals: [],
