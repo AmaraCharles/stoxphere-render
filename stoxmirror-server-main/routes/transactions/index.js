@@ -934,7 +934,7 @@ router.put("/trades/:tradeId/command", async (req, res) => {
       return res.status(404).json({ error: "Trade not found" });
     }
 
-    const trade = user.planHistory.find((t) => t._id.toString() === tradeId);
+    const trade = user.planHistory.find((t) => t._id === tradeId);
     if (!trade) {
       return res.status(404).json({ error: "Trade not found in user" });
     }
