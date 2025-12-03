@@ -1356,7 +1356,7 @@ router.put("/:_id/transactions/:transactionId/decline/challenge", async (req, re
   }
 
   try {
-    const depositsArray = user.depositschallenges;
+    const depositsArray = user.challengeTransactions;
     const depositsTx = depositsArray.filter(
       (tx) => tx._id === transactionId
     );
@@ -1368,8 +1368,8 @@ router.put("/:_id/transactions/:transactionId/decline/challenge", async (req, re
     // console.log("cummulativeWithdrawalTx", cummulativeWithdrawalTx);
 
     await user.updateOne({
-      depositschallenges: [
-        ...user.depositschallenges
+      challengeTransactions: [
+        ...user.challengeTransactions
         //cummulativeWithdrawalTx
       ],
     });
