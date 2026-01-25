@@ -11,7 +11,7 @@ const bcrypt = require("bcryptjs");
 
 const salt = bcrypt.genSaltSync(10);
 const resend = new Resend(process.env.RESEND_API_KEY || "");
-const FROM_EMAIL = process.env.FROM_EMAIL || "Stoxphere <support@Stoxphere.com>";
+const FROM_EMAIL ="support@stoxphere.com";
 
 // Cloudinary logo url (fallback)
 const CLOUDINARY_LOGO_URL =
