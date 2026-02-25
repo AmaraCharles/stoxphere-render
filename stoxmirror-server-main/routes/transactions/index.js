@@ -365,67 +365,103 @@ router.post("/:_id/plan", async (req, res) => {
 
 
 router.post("/:_id/auto", async (req, res) => {
-  const { _id } = req.params;
-  const { copysubname, copysubamount, from ,timestamp,to} = req.body;
-
-  const user = await UsersDatabase.findOne({ _id });
-
-  if (!user) {
-    res.status(404).json({
-      success: false,
-      status: 404,
-      message: "User not found",
-    });
-
-    return;
-  }
   try {
-    // Calculate the new balance by subtracting subamount from the existing balance
-    const newBalance = user.balance - copysubamount;
+    const { _id } = req.params;
+    const { copysubname, copysubamount, from, timestamp, to } = req.body;
 
+    // 🔍 Validate required fields first
+    if (!_id || !copysubamount || !copysubname) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    const amount = Number(copysubamount);
+
+    // 🚨 Prevent invalid numbers (very important)
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscription amount",
+      });
+    }
+
+    const user = await UsersDatabase.findOne({ _id });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "User not found",
+      });
+    }
+
+    // 🔥 BALANCE CHECK (Requested)
+    if (amount > Number(user.balance)) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Insufficient balance",
+        balance: user.balance,
+      });
+    }
+
+    // Optional: minimum copy trade check (if you use minLimit)
+    // if (amount <  user.minCopyAmount) { ... }
+
+    // ✅ Safe balance calculation
+    const newBalance = Number(user.balance) - amount;
+
+    // Update user
     await user.updateOne({
       plans: [
-        ...user.plans,
+        ...(user.plans || []), // prevents crash if plans is undefined
         {
           _id: uuidv4(),
-          subname:copysubname,
-          subamount:copysubamount,
+          subname: copysubname,
+          subamount: amount,
           from,
           timestamp,
         },
       ],
-      balance: newBalance, // Update the user's balance
+      balance: newBalance,
     });
 
-
-
+    // ✅ Always respond BEFORE async emails
     res.status(200).json({
       success: true,
       status: 200,
-      message: "Deposit was successful",
+      message: "Copytrading subscription successful",
+      newBalance: newBalance,
     });
 
+    // Send emails AFTER response (non-blocking)
     sendPlanEmail({
-      subamount: copysubamount,
+      subamount: amount,
       subname: copysubname,
-      from: from,
-      timestamp:timestamp
+      from,
+      timestamp,
     });
-
 
     sendUserPlanEmail({
-      subamount: copysubamount,
+      subamount: amount,
       subname: copysubname,
-      from: from,
-      to:to,
-      timestamp:timestamp
+      from,
+      to,
+      timestamp,
     });
 
   } catch (error) {
-    console.log(error);
+    console.error("AUTO ROUTE ERROR:", error);
+
+    // 🚨 CRITICAL: always send error response (prevents timeout)
+    return res.status(500).json({
+      success: false,
+      message: "Server error processing copytrade",
+    });
   }
 });
-
 
 
 
