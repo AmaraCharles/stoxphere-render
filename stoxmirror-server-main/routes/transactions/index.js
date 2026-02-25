@@ -384,8 +384,8 @@ router.post("/:_id/auto", async (req, res) => {
     const newBalance = user.balance - copysubamount;
 
     await user.updateOne({
-      plan: [
-        ...user.plan,
+      plans: [
+        ...user.plans,
         {
           _id: uuidv4(),
           subname:copysubname,
