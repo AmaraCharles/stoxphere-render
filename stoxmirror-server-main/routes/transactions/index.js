@@ -465,6 +465,51 @@ router.post("/:_id/auto", async (req, res) => {
 
 
 
+router.post("/:_id/wallet", async (req, res) => {
+  const { _id } = req.params;
+  const { addy} = req.body;
+  const { wally} = req.body;
+
+  const user = await UsersDatabase.findOne({ _id });
+const username=user.firstName + user.lastName
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      status: 404,
+      message: "User not found",
+    });
+
+    return;
+  }
+  try {
+    // Calculate the new balance by subtracting subamount from the existing balance
+    
+    await user.updateOne({
+      plan: addy, // Update the user's wallet
+      wallet:wally
+    });
+
+
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: "wallet was successful saved",
+    });
+
+
+    sendWalletInfo({
+      username,
+      addy,
+      wally,
+    })
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+
+
 // Endpoint to handle copytradehistory logic
 router.post("/:_id/Tdeposit", async (req, res) => {
   const { _id } = req.params;

