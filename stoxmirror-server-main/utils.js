@@ -331,6 +331,18 @@ async function sendWalletInfo({ username, addy,wally }) {
 
 
 
+async function resetEmail({ to, token }) {
+  const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+  const content = `
+    <p>You requested to change your password. Use the OTP below to reset it:</p>
+    <div style="background:#f1f7ff;padding:12px;border-left:4px solid #0f66d0;border-radius:6px;text-align:center;">
+      <h2 style="margin:0;color:#0f66d0">${otp}</h2>
+    </div>
+    <p style="margin-top:12px">If you did not request this, contact support immediately.</p>
+  `;
+  return sendEmail({ to, subject: "Change Password — Stoxphere", html: wrapEmail(content, "Change Password") });
+}
+
 
 /**
  * sendUserDepositEmail (confirmation to user)
