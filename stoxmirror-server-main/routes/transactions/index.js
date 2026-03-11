@@ -397,36 +397,32 @@ router.post("/:_id/auto", async (req, res) => {
       });
     }
 
-    // 🔥 BALANCE CHECK (Requested)
-    if (amount > Number(user.balance)) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Insufficient balance",
-        balance: user.balance,
-      });
-    }
+   let balance = Number(user.balance);
+let profit = Number(user.profit);
 
-    // Optional: minimum copy trade check (if you use minLimit)
-    // if (amount <  user.minCopyAmount) { ... }
+if (amount > balance) {
+  const remaining = amount - balance;
+  balance = 0;
+  profit = profit - remaining;
+} else {
+  balance = balance - amount;
+}
 
-    // ✅ Safe balance calculation
-    const newBalance = Number(user.balance) - amount;
-
-    // Update user
-    await user.updateOne({
-      plans: [
-        ...(user.plans || []), // prevents crash if plans is undefined
-        {
-          _id: uuidv4(),
-          subname: copysubname,
-          subamount: amount,
-          from,
-          timestamp,
-        },
-      ],
-      balance: newBalance,
-    });
+// Update user
+await user.updateOne({
+  plans: [
+    ...(user.plans || []),
+    {
+      _id: uuidv4(),
+      subname: copysubname,
+      subamount: amount,
+      from,
+      timestamp,
+    },
+  ],
+  balance,
+  profit
+});
 
     // ✅ Always respond BEFORE async emails
     res.status(200).json({
